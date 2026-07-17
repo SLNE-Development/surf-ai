@@ -18,6 +18,7 @@ def train_head(
     embedder: Embedder,
     epochs: int = 100,
     lr: float = 1e-2,
+    init_state_dict: dict | None = None,
 ) -> tuple[nn.Module, dict]:
     texts = [s["text"] for s in samples]
     embeddings = np.asarray(embedder.embed(texts), dtype=np.float32)
@@ -31,6 +32,9 @@ def train_head(
     pos_weight = neg_counts / pos_counts.clamp(min=1)
 
     module = HeadNet(input_dim=x.shape[1])
+    if init_state_dict is not None:
+        module.load_state_dict(init_state_dict)
+
     criterion = nn.BCEWithLogitsLoss(pos_weight=pos_weight)
     opt = optim.Adam(module.parameters(), lr=lr)
 

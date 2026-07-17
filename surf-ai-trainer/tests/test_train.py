@@ -2,6 +2,7 @@ import hashlib
 
 import numpy as np
 import onnxruntime as ort
+import torch
 
 from app.categories import CATEGORIES
 from app.train import export_head_onnx, train_head
@@ -50,3 +51,23 @@ def test_train_and_export_onnx_roundtrip(tmp_path):
     assert logits.shape == (1, 6)
     predicted_category = CATEGORIES[int(np.argmax(logits[0]))]
     assert predicted_category == "SELF_HARM"
+
+
+def test_train_head_warm_starts_from_init_state_dict():
+    from app.head import HeadNet
+
+    embedder = DeterministicFakeEmbedder()
+
+    # Pretrain a checkpoint on a strong, unambiguous signal.
+    warm_module, _ = train_head(SAMPLES, embedder, epochs=500)
+    init_state_dict = warm_module.state_dict()
+
+    # Zero epochs: with a warm start, output should already reflect the checkpoint,
+    # not a fresh random init.
+    zero_epoch_module, _ = train_head(SAMPLES, embedder, epochs=0, init_state_dict=init_state_dict)
+
+    zero_epoch_module.eval()
+    warm_module.eval()
+    kys_embedding = torch.from_numpy(embedder.embed(["kys"]))
+    with torch.no_grad():
+        assert torch.allclose(zero_epoch_module(kys_embedding), warm_module(kys_embedding))
