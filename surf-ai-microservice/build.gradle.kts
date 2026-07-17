@@ -16,4 +16,5 @@ surfMicroservice {
 
 dependencies {
     api(projects.surfAiCore.surfAiCoreCommon)
+    testImplementation(kotlin("test"))
 }
