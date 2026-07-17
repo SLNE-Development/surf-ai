@@ -53,6 +53,13 @@ object ModelVersionRepository {
         AiModelVersionTable.selectAll().map(::toRow).toList()
     }
 
+    suspend fun get(version: Int): ModelVersionRow? = suspendTransaction {
+        AiModelVersionTable.selectAll()
+            .where { AiModelVersionTable.version eq version }
+            .map(::toRow)
+            .firstOrNull()
+    }
+
     private fun toRow(row: ResultRow) = ModelVersionRow(
         version = row[AiModelVersionTable.version],
         s3Key = row[AiModelVersionTable.s3Key],

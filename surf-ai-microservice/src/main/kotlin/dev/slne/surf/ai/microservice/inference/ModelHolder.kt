@@ -1,6 +1,5 @@
 package dev.slne.surf.ai.microservice.inference
 
-import dev.slne.surf.ai.microservice.config.AiConfig
 import dev.slne.surf.ai.microservice.db.repositories.ModelVersionRow
 import dev.slne.surf.ai.microservice.storage.ModelStorage
 import kotlin.io.path.Path
@@ -15,7 +14,7 @@ open class ModelHolder {
     open fun embedder(): Embedder? = snapshot?.embedding
     open fun scorer(): Scorer? = snapshot?.head
 
-    open suspend fun reloadTo(version: ModelVersionRow, storage: ModelStorage, config: AiConfig) {
+    open suspend fun reloadTo(version: ModelVersionRow, storage: ModelStorage, embeddingPrefix: String) {
         val embeddingOnnx = Path("cache/models/embedding/model.onnx")
         val tokenizerJson = Path("cache/models/embedding/tokenizer.json")
         if (!embeddingOnnx.exists()) storage.download("models/embedding/model.onnx", embeddingOnnx)
@@ -24,7 +23,7 @@ open class ModelHolder {
         val headOnnx = Path("cache/models/head/head-v${version.version}.onnx")
         storage.download(version.s3Key, headOnnx)
 
-        val embedding = EmbeddingModel(embeddingOnnx, tokenizerJson, config.embeddingPrefix)
+        val embedding = EmbeddingModel(embeddingOnnx, tokenizerJson, embeddingPrefix)
         val head = ClassificationHead(headOnnx)
 
         val previous = snapshot
