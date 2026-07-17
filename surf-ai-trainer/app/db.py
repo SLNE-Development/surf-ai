@@ -76,3 +76,10 @@ def next_version(conn: psycopg.Connection) -> int:
         cur.execute("SELECT COALESCE(MAX(version), 0) + 1 FROM ai_model_version")
         (version,) = cur.fetchone()
         return version
+
+
+def get_metrics(conn: psycopg.Connection, version: int) -> dict[str, float] | None:
+    with conn.cursor() as cur:
+        cur.execute("SELECT metrics FROM ai_model_version WHERE version = %s", (version,))
+        row = cur.fetchone()
+        return json.loads(row[0]) if row else None
