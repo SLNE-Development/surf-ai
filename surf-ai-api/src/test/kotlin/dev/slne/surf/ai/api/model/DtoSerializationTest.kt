@@ -41,4 +41,10 @@ class DtoSerializationTest {
         val bytes = cbor.encodeToByteArray(r)
         assertEquals(r, cbor.decodeFromByteArray<AiCheckResult>(bytes))
     }
+
+    @Test fun `feedback polymorphism round-trips`() {
+        val fp: AiFeedback = AiFeedback.FalseNegative(setOf(AiCategory.SEXUAL))
+        val bytes = cbor.encodeToByteArray(AiFeedback.serializer(), fp)
+        assertEquals(fp, cbor.decodeFromByteArray(AiFeedback.serializer(), bytes))
+    }
 }
