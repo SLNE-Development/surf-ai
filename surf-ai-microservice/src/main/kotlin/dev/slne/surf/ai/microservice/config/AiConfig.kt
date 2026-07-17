@@ -1,4 +1,4 @@
-package dev.slne.surf.ai.core.common.config
+package dev.slne.surf.ai.microservice.config
 
 import dev.slne.surf.ai.api.AIInstance
 import dev.slne.surf.api.core.config.SpongeYmlConfigClass
