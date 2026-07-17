@@ -61,4 +61,7 @@ def export_head_onnx(module: nn.Module, dest: Path) -> None:
         output_names=["logits"],
         dynamic_axes={"embedding": {0: "batch"}, "logits": {0: "batch"}},
         opset_version=17,
+        dynamo=False,  # the dynamo exporter writes weights to a separate *.onnx.data file by
+        # default; ModelStorage only uploads/downloads the single .onnx key, so external data
+        # would silently produce an unloadable model in the S3 registry.
     )

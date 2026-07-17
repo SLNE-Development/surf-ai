@@ -24,6 +24,7 @@ Implementation plan: [docs/superpowers/plans/2026-07-17-surf-ai-moderation.md](d
 
 - **Inference runs only in the microservice JVM.** Minecraft plugins are thin RPC clients; they never load models.
 - **RPC transport is RabbitMQ, serialized with kotlinx.serialization CBOR.** Every RPC parameter/return type is `@Serializable`; `UUID` fields use `@Contextual` (works out of the box via the framework's `SurfSerializerModule` - verified in `surf-ai-core-common`'s KSP-generated proxies; a bare `Cbor {}` instance without that module needs its own `UUIDSerializer`, see `surf-ai-api`'s `DtoSerializationTest`).
+- **`ServerRabbitMQApi` and `ClientRabbitMQApi` cannot coexist in the same JVM process** - `RabbitMQApi`'s RPC-service factory binds as a process-wide singleton to whichever type is constructed first, and the other throws `ClassCastException`. This is why there is no same-process wire-level RPC test; `AiRpcServiceImpl`'s logic is covered directly (`FeedbackTest`) instead.
 - **Category order is a wire contract.** `AiCategory` ordinal order - `HARASSMENT, SELF_HARM, HATE_SPEECH, SEXUAL, THREAT, CHILD_SAFETY` - is the ONNX head's output index order and must never change without a version bump on both sides.
 - **No per-message DB writes.** Raw chat lives only in the microservice's in-memory Caffeine TTL cache (`RequestCache`). Only `feedback()` persists a labeled sample, into `ai_labeled_sample`.
 - **All in-JVM caches use Caffeine** (`RequestCache`, `OverrideCache`, pattern from the original `ExampleCache`).
