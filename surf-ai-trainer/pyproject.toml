@@ -8,6 +8,7 @@ dependencies = [
     "transformers",
     "optimum[onnxruntime]",
     "onnxruntime",
+    "tokenizers",
     "numpy",
     "scikit-learn",
     "fastapi",
@@ -27,3 +28,9 @@ build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
 include = ["app*"]
+
+[tool.pytest.ini_options]
+markers = [
+    "slow: needs network access (model downloads) - excluded by default",
+]
+addopts = "-m 'not slow'"

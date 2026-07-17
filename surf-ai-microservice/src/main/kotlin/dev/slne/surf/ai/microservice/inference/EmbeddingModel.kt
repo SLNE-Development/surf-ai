@@ -25,6 +25,7 @@ class EmbeddingModel(onnxPath: Path, tokenizerPath: Path, private val prefix: St
 
         val idsBuffer = LongBuffer.allocate(batch * seqLen)
         val maskBuffer = LongBuffer.allocate(batch * seqLen)
+        val tokenTypeBuffer = LongBuffer.allocate(batch * seqLen)
         val masks = Array(batch) { LongArray(seqLen) }
         for (i in 0 until batch) {
             val ids = encodings[i].ids
@@ -33,19 +34,29 @@ class EmbeddingModel(onnxPath: Path, tokenizerPath: Path, private val prefix: St
                 idsBuffer.put(if (j < ids.size) ids[j] else 0L)
                 val m = if (j < mask.size) mask[j] else 0L
                 maskBuffer.put(m)
+                tokenTypeBuffer.put(0L)
                 masks[i][j] = m
             }
         }
         idsBuffer.flip()
         maskBuffer.flip()
+        tokenTypeBuffer.flip()
 
         val shape = longArrayOf(batch.toLong(), seqLen.toLong())
         OnnxTensor.createTensor(environment, idsBuffer, shape).use { idsTensor ->
             OnnxTensor.createTensor(environment, maskBuffer, shape).use { maskTensor ->
-                session.run(mapOf("input_ids" to idsTensor, "attention_mask" to maskTensor)).use { result ->
-                    @Suppress("UNCHECKED_CAST")
-                    val hiddenState = result.get(0).value as Array<Array<FloatArray>>
-                    return Array(batch) { i -> meanPoolNormalize(hiddenState[i], masks[i]) }
+                OnnxTensor.createTensor(environment, tokenTypeBuffer, shape).use { tokenTypeTensor ->
+                    session.run(
+                        mapOf(
+                            "input_ids" to idsTensor,
+                            "attention_mask" to maskTensor,
+                            "token_type_ids" to tokenTypeTensor,
+                        )
+                    ).use { result ->
+                        @Suppress("UNCHECKED_CAST")
+                        val hiddenState = result.get(0).value as Array<Array<FloatArray>>
+                        return Array(batch) { i -> meanPoolNormalize(hiddenState[i], masks[i]) }
+                    }
                 }
             }
         }

@@ -46,5 +46,8 @@ __pycache__/
 *.egg-info/
 .pytest_cache/
 .venv/
-*.onnx
 cache/
+
+### surf-ai model fixtures (fetched locally, not committed - see surf-ai-trainer/README.md) ###
+*.onnx
+/surf-ai-microservice/src/test/resources/models/
