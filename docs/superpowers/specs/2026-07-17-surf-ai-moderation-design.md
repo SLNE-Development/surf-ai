@@ -60,7 +60,7 @@ Baut auf der bestehenden Struktur auf:
 | `surf-ai-api` | Plugin-facing Interface `AIInstance` + DTOs (`@Serializable`) |
 | `surf-ai-core:surf-ai-core-common` | `@RpcService`-Contracts (RabbitMQ) |
 | `surf-ai-core:surf-ai-core-client` | Client-seitige Core-Config |
-| `surf-ai-client:*` (common/paper/velocity) | Dünne RPC-Clients; bridgen `AIInstance` → RPC-Proxy |
+| `surf-ai-client:*` (common/paper/velocity) | Dünne RPC-Clients; bridgen `AIInstance` → RPC-Proxy. Paper-Client zusätzlich: Ingame-Feedback-Dialog (§5a) |
 | `surf-ai-microservice` | Inferenz-Engine (DJL+ONNX), Batching, Override-Cache, Snapshot-Loader/Hot-Reload, DB-Tabellen & Repos, RPC-Impl |
 | `surf-ai-trainer` *(neu, Python)* | FastAPI + APScheduler; trainiert Kopf; S3-Snapshots |
 | `docker/` + `docker-compose.yml` | Deployment für Coolify + lokales Dev |
@@ -127,6 +127,15 @@ interface AiAdminRpcService {
 
 `AiClientInstance` (in `surf-ai-client-common`) implementiert `AIInstance`, indem es die Calls auf den `AiRpcService`-Proxy (`rabbitApi.createRpcService<AiRpcService>()`) bridged — analog zum bestehenden `exampleProxy`.
 
+## 5a. Ingame-Feedback-Dialog (Paper-Client)
+
+Damit Mods Feedback direkt ingame geben können, stellt der Paper-Client einen Dialog über euer `dev.slne.surf.api.paper.dialog`-DSL bereit (Muster: `ExampleDialog`).
+
+- **Auslöser:** eine wiederverwendbare, anklickbare Komponente (analog `renderDialogShowComponent`), die eine `requestId` + das `AiCheckResult` trägt, sowie ein Debug-/Test-Command (z.B. `/surfai feedback <requestId>`), um den Dialog zu öffnen. Wie der Klick real ausgelöst wird (z.B. durch das Moderations-Plugin), ist nicht unser Scope — wir liefern den Dialog-Baustein.
+- **Dialog-Inhalt (`base { body { ... } }`):** zeigt den Nachrichtentext + aktuelle Scores pro Kategorie; Inputs zur Erfassung des Feedbacks (welche Kategorien fälschlich/zu niedrig/zu hoch waren) → gemappt auf `AiFeedback` (`FalsePositive` / `FalseNegative` / `Correct`).
+- **Submit:** Action-Button ruft `AIInstance.feedback(requestId, feedback)` (RPC → Microservice). `afterAction(WAIT_FOR_RESPONSE)`, da suspending.
+- **Ergebnis:** danach wird direkt ein **Notice-Dialog** (`type { notice { } }`) angezeigt — mit dem `AiFeedbackResult` (ACCEPTED → „Feedback gespeichert, fließt beim nächsten Training ein" / EXPIRED → „Anfrage zu alt").
+
 ## 6. Inferenz-Pipeline (Microservice, Hot Path)
 
 ```
@@ -141,6 +150,7 @@ check(text)
 ```
 
 - **Kein DB-Write pro Nachricht.** Bei 50–100/s wären das ~4–8 Mio. Zeilen/Tag — unerwünscht. Jedes `check()`-Resultat landet nur in einem **flüchtigen In-Memory-TTL-Cache** (z.B. 15–30 Min, konfigurierbar), damit ein späteres `feedback(uuid)` die Anfrage noch auflösen kann. Nach der TTL wird die Nachricht verworfen. Persistiert wird **ausschließlich**, was per Feedback gelabelt wird (siehe §7) — plus der Seed-Korpus.
+  - Implementiert mit **Caffeine** (`com.github.benmanes.caffeine.cache.Caffeine`), `.expireAfterWrite(ttl)` + `.maximumSize(...)`. Muster wie `ExampleCache` (keyed auf `requestId`).
 - **Micro-Batching** bündelt einzelne `check()`-Calls für effiziente Embedding-Inferenz; deckt 50–100/s mit Reserve ab. Batch-Fenster + max Batchgröße konfigurierbar.
 - **Thread-/Coroutine-Pool** für Embedding-Inferenz, damit RabbitMQ-Worker nicht blockieren.
 - Das Embedding wird im TTL-Cache mitgehalten: kommt Feedback, ist der Vektor schon da und muss nicht neu berechnet werden (Vektor gilt nur solange das Embedding-Model gleich bleibt).
@@ -151,7 +161,9 @@ Ablauf `feedback(requestId, feedback)`:
 
 1. Auflösung der `requestId` im **TTL-Cache** (§6). Ist sie abgelaufen/unbekannt (Feedback kam zu spät oder nach Microservice-Neustart) → No-Op mit klarem Ergebnis (`FeedbackResult.Expired`), kein Fehler.
 2. **Persistieren als gelabeltes Trainingsbeispiel:** Der aufgelöste Text (+ ggf. Embedding) wird zusammen mit den korrigierten Labels dauerhaft in `ai_labeled_sample` geschrieben. **Das ist der einzige Weg, wie reguläre Chatnachrichten in die DB gelangen.**
-3. **Override-Cache (in-JVM, flüchtig):** Zusätzlich wird ein Override in einen LRU-Cache geschrieben (Key: normalisierter Text / Embedding-Nähe). Identische/sehr ähnliche Nachricht → sofort korrigierter Score. Wird beim nächsten Retrain überflüssig.
+3. **Override-Cache (in-JVM, flüchtig):** Zusätzlich wird ein Override in einen **Caffeine**-Cache geschrieben (`maximumSize` + `expireAfterWrite`, Key: normalisierter Text / Embedding-Nähe). Identische/sehr ähnliche Nachricht → sofort korrigierter Score. Wird beim nächsten Retrain überflüssig.
+
+Alle In-JVM-Caches im Projekt werden über **Caffeine** realisiert (Muster: `ExampleCache` im Microservice).
 
 Semantik: Feedback beschreibt das **korrekte Label**, unabhängig vom angezeigten Confidence-Wert. `FalseNegative(SEXUAL)` = „SEXUAL ist korrekt/soll hoch sein" (hebt einen zu niedrigen Score an); `FalsePositive(SEXUAL)` = „SEXUAL ist falsch" (senkt ihn). Jedes gelabelte Beispiel bekommt einen **Quarantäne-Status** und ein Gewicht; es fließt beim nächsten Retrain als Trainingssignal ein.
 
@@ -207,9 +219,10 @@ Kuratierter, gelabelter Multi-Label-Korpus **DE + EN** aus drei Quellen:
 - **`surf-ai-microservice`** → Docker-Image, Coolify-Service. Env/Config: Postgres-DSN, RabbitMQ, S3/MinIO-Creds.
 - **`surf-ai-trainer`** → Docker-Image, Coolify-Service (long-running). Env: Postgres-DSN, S3/MinIO-Creds. `/health`-Healthcheck.
 - **`docker-compose.yml`** im Repo-Root:
-  - Services: `microservice`, `trainer`, plus Dev-Abhängigkeiten (Postgres, RabbitMQ, MinIO) für lokales Testen.
+  - Services: `microservice`, `trainer`, plus Dev-Abhängigkeiten (**Postgres**, RabbitMQ, **MinIO**) für lokales Testen.
   - Von Coolify direkt konsumierbar; lokal `docker compose up` als Dev-Umgebung.
 - **Dockerfiles**: JVM-Image (Gradle-Build → Runtime-JRE) + Python-Image (slim + ML-Deps).
+- **Lokales Test-Setup:** Bereits **zu Beginn der Implementierung** wird eine (dev-)`docker-compose` mit **Postgres + MinIO** hochgezogen (Docker Desktop ist beim Nutzer aktiv) und für Integrationstests genutzt — Prod nutzt später MinIO/Postgres aus Coolify. Verbindungsdaten kommen aus Env/Config.
 
 ## 13. Testing-Strategie
 
@@ -231,8 +244,9 @@ Kuratierter, gelabelter Multi-Label-Korpus **DE + EN** aus drei Quellen:
 
 ## 15. Offene Punkte / benötigt vom Nutzer
 
-- **Bestätigung**, dass `dev.slne.surf.database` gegen **Postgres** läuft (Trainer braucht direkten Treiber).
-- **S3/MinIO-Endpoint + Credentials** (Bucket-Name, Region/Endpoint) fürs Deployment.
+- ✅ **DB = Postgres** (bestätigt). Trainer nutzt direkten Postgres-Treiber.
+- ✅ **MinIO** kommt in Coolify (Prod). Fürs lokale Testen zieht die Implementierung selbst Postgres + MinIO per docker-compose hoch (Docker Desktop aktiv).
+- **Prod-Credentials** (Coolify): Postgres-DSN, MinIO-Endpoint/Bucket/Keys, RabbitMQ — werden erst beim Deployment gebraucht, via Env/Config.
 - **RabbitMQ-Serialisierungsformat** des RPC-Layers — in der Implementierungsphase am bestehenden `ExampleRpcService`-Muster verifizieren, damit die DTOs korrekt über die Leitung gehen.
 
 ## 16. Betriebsregeln für Folge-Agents
