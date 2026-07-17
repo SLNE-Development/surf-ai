@@ -8,6 +8,7 @@ import dev.slne.surf.ai.microservice.db.tables.AiSeedSampleTable
 import dev.slne.surf.ai.microservice.rpc.ExampleRpcServiceImpl
 import dev.slne.surf.database.DatabaseApi
 import dev.slne.surf.database.libs.org.jetbrains.exposed.v1.r2dbc.SchemaUtils
+import dev.slne.surf.database.libs.org.jetbrains.exposed.v1.r2dbc.transactions.suspendTransaction
 import dev.slne.surf.microservice.api.microservice.Microservice
 import dev.slne.surf.microservice.api.microservice.getMicroservice
 import dev.slne.surf.rabbitmq.api.ServerRabbitMQApi
@@ -22,7 +23,9 @@ class AiMicroservice : Microservice() {
     val databaseApi = DatabaseApi.create(dataPath)
 
     override suspend fun onBootstrap(args: List<String>) {
-        SchemaUtils.create(AiSeedSampleTable, AiLabeledSampleTable, AiModelVersionTable)
+        suspendTransaction {
+            SchemaUtils.create(AiSeedSampleTable, AiLabeledSampleTable, AiModelVersionTable)
+        }
 
         rabbitApi.registerRpcService<ExampleRpcService>(ExampleRpcServiceImpl())
         rabbitApi.freezeAndConnect()
