@@ -5,6 +5,8 @@ from pathlib import Path
 from typing import Protocol
 
 import boto3
+import torch
+from botocore.exceptions import ClientError
 
 from app import db
 from app.config import Settings
@@ -41,6 +43,16 @@ def _default_embedder(settings: Settings) -> Embedder:
     return OnnxEmbedder(onnx_path, tokenizer_path, settings.embedding_prefix)
 
 
+def _download_base_checkpoint(settings: Settings) -> Path | None:
+    s3 = _s3_client(settings)
+    dest = Path(tempfile.mkdtemp()) / "base-checkpoint.pt"
+    try:
+        s3.download_file(settings.s3_bucket, settings.base_head_checkpoint_s3_key, str(dest))
+    except ClientError:
+        return None
+    return dest
+
+
 def run_retrain(embedder: Embedder | None = None, settings: Settings | None = None) -> dict:
     settings = settings or Settings()
     conn = db.connect(settings)
@@ -49,7 +61,9 @@ def run_retrain(embedder: Embedder | None = None, settings: Settings | None = No
         embedder = embedder or _default_embedder(settings)
 
         train_samples, holdout = holdout_split(samples)
-        module, train_metrics = train_head(train_samples, embedder)
+        checkpoint_path = _download_base_checkpoint(settings)
+        init_state_dict = torch.load(checkpoint_path, weights_only=True) if checkpoint_path else None
+        module, train_metrics = train_head(train_samples, embedder, init_state_dict=init_state_dict)
         eval_metrics = (
             compute_metrics(module, embedder, holdout) if holdout else {"macro_f1": 0.0}
         )

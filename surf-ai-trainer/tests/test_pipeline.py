@@ -6,6 +6,7 @@ import pytest
 from app import db, seed
 from app.config import Settings
 from app.pipeline import run_retrain
+from app.train import train_head as pipeline_train_head
 
 CREATE_TABLES = """
 CREATE TABLE IF NOT EXISTS ai_seed_sample (
@@ -78,3 +79,47 @@ def test_run_retrain_bootstraps_version_1_from_seed_only(clean_db):
         assert db.active_version(conn) == 1
     finally:
         conn.close()
+
+
+def test_run_retrain_warm_starts_from_base_checkpoint_when_present(clean_db, tmp_path, monkeypatch):
+    import torch
+
+    from app.head import HeadNet
+
+    base_module = HeadNet(input_dim=384)
+    checkpoint_path = tmp_path / "base-checkpoint.pt"
+    torch.save(base_module.state_dict(), checkpoint_path)
+
+    captured = {}
+    original_train_head = pipeline_train_head
+
+    def spy_train_head(samples, embedder, epochs=100, lr=1e-2, init_state_dict=None):
+        captured["init_state_dict"] = init_state_dict
+        return original_train_head(samples, embedder, epochs, lr, init_state_dict)
+
+    monkeypatch.setattr("app.pipeline.train_head", spy_train_head)
+    monkeypatch.setattr(
+        "app.pipeline._download_base_checkpoint",
+        lambda settings: checkpoint_path,
+    )
+
+    run_retrain(embedder=DeterministicFakeEmbedder(), settings=clean_db)
+
+    assert captured["init_state_dict"] is not None
+    assert set(captured["init_state_dict"].keys()) == set(base_module.state_dict().keys())
+
+
+def test_run_retrain_falls_back_to_random_init_when_no_checkpoint(clean_db, monkeypatch):
+    captured = {}
+    original_train_head = pipeline_train_head
+
+    def spy_train_head(samples, embedder, epochs=100, lr=1e-2, init_state_dict=None):
+        captured["init_state_dict"] = init_state_dict
+        return original_train_head(samples, embedder, epochs, lr, init_state_dict)
+
+    monkeypatch.setattr("app.pipeline.train_head", spy_train_head)
+    monkeypatch.setattr("app.pipeline._download_base_checkpoint", lambda settings: None)
+
+    run_retrain(embedder=DeterministicFakeEmbedder(), settings=clean_db)
+
+    assert captured["init_state_dict"] is None
