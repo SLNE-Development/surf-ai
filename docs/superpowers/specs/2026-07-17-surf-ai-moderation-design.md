@@ -222,7 +222,7 @@ Kuratierter, gelabelter Multi-Label-Korpus **DE + EN** aus drei Quellen:
   - Services: `microservice`, `trainer`, plus Dev-Abhängigkeiten (**Postgres**, RabbitMQ, **MinIO**) für lokales Testen.
   - Von Coolify direkt konsumierbar; lokal `docker compose up` als Dev-Umgebung.
 - **Dockerfiles**: JVM-Image (Gradle-Build → Runtime-JRE) + Python-Image (slim + ML-Deps).
-- **Lokales Test-Setup:** Bereits **zu Beginn der Implementierung** wird eine (dev-)`docker-compose` mit **Postgres + MinIO** hochgezogen (Docker Desktop ist beim Nutzer aktiv) und für Integrationstests genutzt — Prod nutzt später MinIO/Postgres aus Coolify. Verbindungsdaten kommen aus Env/Config.
+- **Lokales Test-Setup:** Bereits **zu Beginn der Implementierung** wird eine (dev-)`docker-compose` mit **Postgres + MinIO + RabbitMQ** hochgezogen (Docker Desktop ist beim Nutzer aktiv) und für Integrationstests genutzt — Prod nutzt später dieselben Dienste aus Coolify. Verbindungsdaten kommen aus Env/Config. Mit allen drei Diensten kann der volle RPC-Pfad (Client → RabbitMQ → Microservice → Postgres/S3) end-to-end selbständig getestet werden.
 
 ## 13. Testing-Strategie
 
@@ -234,7 +234,10 @@ Kuratierter, gelabelter Multi-Label-Korpus **DE + EN** aus drei Quellen:
   - `"geh doch einfach hinten auf den berg und spring runter"` → alle niedrig
   - `"Penis"` → `SEXUAL` erhöht (soll geflaggt werden)
 - **Trainer (Python):** Tests für Export-Format, Metrik-Guard, Holdout-Eval, S3-Roundtrip (gegen MinIO).
-- **Integrationstest:** Microservice ↔ Trainer Retrain-Zyklus (Trigger → neue Version → Hot-Reload → geänderte Prediction).
+- **Integrationstest (end-to-end, gegen die dev-docker-compose):**
+  - RPC-Pfad: `check()`/`feedback()` über echtes RabbitMQ → Microservice → Postgres.
+  - Feedback-Persistenz: Feedback → `ai_labeled_sample` in Postgres; TTL-Expiry → `EXPIRED`.
+  - Retrain-Zyklus: Trainer (Trigger → neue Version → S3/MinIO → Hot-Reload → geänderte Prediction).
 
 ## 14. Nicht-Ziele (out of scope)
 
