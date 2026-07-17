@@ -11,6 +11,7 @@ class PaperMain : SuspendingJavaPlugin() {
 
     override suspend fun onEnableAsync() {
         AiClientInstance.INSTANCE.onEnable()
+        AiFeedbackCommand.register(this)
     }
 
     override suspend fun onDisableAsync() {
