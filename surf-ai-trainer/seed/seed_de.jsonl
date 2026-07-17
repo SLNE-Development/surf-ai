@@ -1,0 +1,125 @@
+{"text": "du hurensohn", "labels": ["HARASSMENT"], "language": "de", "source": "seed_authored"}
+{"text": "verpiss dich du Idiot", "labels": ["HARASSMENT"], "language": "de", "source": "seed_authored"}
+{"text": "niemand mag dich hier, geh einfach", "labels": ["HARASSMENT"], "language": "de", "source": "seed_authored"}
+{"text": "du bist so dumm, wie hält man das aus", "labels": ["HARASSMENT"], "language": "de", "source": "seed_authored"}
+{"text": "halt deine dreckige Fresse", "labels": ["HARASSMENT"], "language": "de", "source": "seed_authored"}
+{"text": "du nutzloses Stück Scheiße", "labels": ["HARASSMENT"], "language": "de", "source": "seed_authored"}
+{"text": "geh sterben, du Missgeburt", "labels": ["HARASSMENT"], "language": "de", "source": "seed_authored"}
+{"text": "du bist der letzte Abschaum dieses Servers", "labels": ["HARASSMENT"], "language": "de", "source": "seed_authored"}
+{"text": "verkrüppelter Vollidiot, lern erstmal spielen", "labels": ["HARASSMENT"], "language": "de", "source": "seed_authored"}
+{"text": "du widerlicher Wichser", "labels": ["HARASSMENT"], "language": "de", "source": "seed_authored"}
+{"text": "ich hasse dich, du erbärmliche Existenz", "labels": ["HARASSMENT"], "language": "de", "source": "seed_authored"}
+{"text": "du bist einfach nur peinlich für alle", "labels": ["HARASSMENT"], "language": "de", "source": "seed_authored"}
+{"text": "hau ab, du nervige Ratte", "labels": ["HARASSMENT"], "language": "de", "source": "seed_authored"}
+{"text": "so ein hässlicher Loser wie du sollte nicht existieren", "labels": ["HARASSMENT"], "language": "de", "source": "seed_authored"}
+{"text": "du bist echt die dümmste Person hier", "labels": ["HARASSMENT"], "language": "de", "source": "seed_authored"}
+{"text": "keiner will dich in diesem Team, verschwinde", "labels": ["HARASSMENT"], "language": "de", "source": "seed_authored"}
+{"text": "du kotzt mich an, du Vollpfosten", "labels": ["HARASSMENT"], "language": "de", "source": "seed_authored"}
+{"text": "geh doch zurück in dein Loch, Freak", "labels": ["HARASSMENT"], "language": "de", "source": "seed_authored"}
+{"text": "du bist ein erbärmlicher Versager", "labels": ["HARASSMENT"], "language": "de", "source": "seed_authored"}
+{"text": "hoffentlich bannen sie dich bald, Nervensäge", "labels": ["HARASSMENT"], "language": "de", "source": "seed_authored"}
+{"text": "du miese kleine Petze", "labels": ["HARASSMENT"], "language": "de", "source": "seed_authored"}
+{"text": "dein Gameplay ist so schlecht wie dein Charakter", "labels": ["HARASSMENT"], "language": "de", "source": "seed_authored"}
+{"text": "kys", "labels": ["SELF_HARM"], "language": "de", "source": "seed_authored"}
+{"text": "geh dich doch einfach umbringen", "labels": ["SELF_HARM"], "language": "de", "source": "seed_authored"}
+{"text": "spring doch von einem Berg", "labels": ["SELF_HARM"], "language": "de", "source": "seed_authored"}
+{"text": "schneide dich einfach, das hilft", "labels": ["SELF_HARM"], "language": "de", "source": "seed_authored"}
+{"text": "bring dich um, keiner würde dich vermissen", "labels": ["SELF_HARM"], "language": "de", "source": "seed_authored"}
+{"text": "du solltest einfach nicht mehr aufwachen", "labels": ["SELF_HARM"], "language": "de", "source": "seed_authored"}
+{"text": "mach doch Schluss mit deinem Leben", "labels": ["SELF_HARM"], "language": "de", "source": "seed_authored"}
+{"text": "häng dich auf, niemand braucht dich", "labels": ["SELF_HARM"], "language": "de", "source": "seed_authored"}
+{"text": "die Welt wäre besser ohne dich, geh sterben", "labels": ["SELF_HARM"], "language": "de", "source": "seed_authored"}
+{"text": "spring einfach vor den nächsten Zug", "labels": ["SELF_HARM"], "language": "de", "source": "seed_authored"}
+{"text": "du bringst dir am besten selbst was an", "labels": ["SELF_HARM"], "language": "de", "source": "seed_authored"}
+{"text": "hoffentlich tust du dir bald was an", "labels": ["SELF_HARM"], "language": "de", "source": "seed_authored"}
+{"text": "geh und ritz dich, das machst du doch eh schon", "labels": ["SELF_HARM"], "language": "de", "source": "seed_authored"}
+{"text": "keiner würde weinen, wenn du dich umbringst", "labels": ["SELF_HARM"], "language": "de", "source": "seed_authored"}
+{"text": "warum lebst du überhaupt noch, mach Schluss", "labels": ["SELF_HARM"], "language": "de", "source": "seed_authored"}
+{"text": "beende dein erbärmliches Leben endlich", "labels": ["SELF_HARM"], "language": "de", "source": "seed_authored"}
+{"text": "nimm doch einfach zu viele Tabletten", "labels": ["SELF_HARM"], "language": "de", "source": "seed_authored"}
+{"text": "du solltest dich einfach selbst auslöschen", "labels": ["SELF_HARM"], "language": "de", "source": "seed_authored"}
+{"text": "spring von deinem Dach, mach schon", "labels": ["SELF_HARM"], "language": "de", "source": "seed_authored"}
+{"text": "geh und häng dich auf im Keller", "labels": ["SELF_HARM"], "language": "de", "source": "seed_authored"}
+{"text": "bring dich lieber selbst um, bevor es andere tun", "labels": ["SELF_HARM"], "language": "de", "source": "seed_authored"}
+{"text": "es wäre besser du wärst einfach tot", "labels": ["SELF_HARM"], "language": "de", "source": "seed_authored"}
+{"text": "Ausländer raus aus unserem Land", "labels": ["HATE_SPEECH"], "language": "de", "source": "seed_authored"}
+{"text": "alle Muslime sind Terroristen", "labels": ["HATE_SPEECH"], "language": "de", "source": "seed_authored"}
+{"text": "Juden sind an allem schuld", "labels": ["HATE_SPEECH"], "language": "de", "source": "seed_authored"}
+{"text": "Frauen gehören nicht ins Gaming", "labels": ["HATE_SPEECH"], "language": "de", "source": "seed_authored"}
+{"text": "Schwule sollten sich schämen zu existieren", "labels": ["HATE_SPEECH"], "language": "de", "source": "seed_authored"}
+{"text": "diese ganzen Flüchtlinge sind das Problem", "labels": ["HATE_SPEECH"], "language": "de", "source": "seed_authored"}
+{"text": "Menschen wie du gehören nicht in unser Land", "labels": ["HATE_SPEECH"], "language": "de", "source": "seed_authored"}
+{"text": "alle Schwarzen sind kriminell", "labels": ["HATE_SPEECH"], "language": "de", "source": "seed_authored"}
+{"text": "Behinderte sollten nicht mitspielen dürfen", "labels": ["HATE_SPEECH"], "language": "de", "source": "seed_authored"}
+{"text": "typisch Frau, kann nicht mal richtig zocken", "labels": ["HATE_SPEECH"], "language": "de", "source": "seed_authored"}
+{"text": "diese Rasse ist einfach minderwertig", "labels": ["HATE_SPEECH"], "language": "de", "source": "seed_authored"}
+{"text": "Zigeuner klauen doch eh nur", "labels": ["HATE_SPEECH"], "language": "de", "source": "seed_authored"}
+{"text": "Transpersonen sind einfach krank im Kopf", "labels": ["HATE_SPEECH"], "language": "de", "source": "seed_authored"}
+{"text": "alle Asiaten sind gleich und nervig", "labels": ["HATE_SPEECH"], "language": "de", "source": "seed_authored"}
+{"text": "Christen sind alle verlogene Heuchler", "labels": ["HATE_SPEECH"], "language": "de", "source": "seed_authored"}
+{"text": "diese ganze Community wird von Ausländern kaputt gemacht", "labels": ["HATE_SPEECH"], "language": "de", "source": "seed_authored"}
+{"text": "Frauen sollten in der Küche bleiben, nicht zocken", "labels": ["HATE_SPEECH"], "language": "de", "source": "seed_authored"}
+{"text": "Muslime gehören alle abgeschoben", "labels": ["HATE_SPEECH"], "language": "de", "source": "seed_authored"}
+{"text": "so ein Volk sollte gar nicht existieren", "labels": ["HATE_SPEECH"], "language": "de", "source": "seed_authored"}
+{"text": "Homosexuelle sind widernatürlich und falsch", "labels": ["HATE_SPEECH"], "language": "de", "source": "seed_authored"}
+{"text": "penis", "labels": ["SEXUAL"], "language": "de", "source": "seed_authored"}
+{"text": "zeig mir deine Titten", "labels": ["SEXUAL"], "language": "de", "source": "seed_authored"}
+{"text": "schick mir Nacktbilder", "labels": ["SEXUAL"], "language": "de", "source": "seed_authored"}
+{"text": "ich will mit dir Sex haben", "labels": ["SEXUAL"], "language": "de", "source": "seed_authored"}
+{"text": "willst du über mein Ding reden", "labels": ["SEXUAL"], "language": "de", "source": "seed_authored"}
+{"text": "beschreib mir wie du nackt aussiehst", "labels": ["SEXUAL"], "language": "de", "source": "seed_authored"}
+{"text": "lass uns über meinen Schwanz reden", "labels": ["SEXUAL"], "language": "de", "source": "seed_authored"}
+{"text": "ich will dich hart ficken", "labels": ["SEXUAL"], "language": "de", "source": "seed_authored"}
+{"text": "schick mir ein Bild von deiner Vagina", "labels": ["SEXUAL"], "language": "de", "source": "seed_authored"}
+{"text": "hast du schon mal gewichst", "labels": ["SEXUAL"], "language": "de", "source": "seed_authored"}
+{"text": "lass uns pornografisches Rollenspiel machen", "labels": ["SEXUAL"], "language": "de", "source": "seed_authored"}
+{"text": "ich stell mir vor wie ich dich anfasse", "labels": ["SEXUAL"], "language": "de", "source": "seed_authored"}
+{"text": "zeig mir deinen nackten Körper", "labels": ["SEXUAL"], "language": "de", "source": "seed_authored"}
+{"text": "ich will dass du für mich strippst", "labels": ["SEXUAL"], "language": "de", "source": "seed_authored"}
+{"text": "sprich schmutzig mit mir über Sex", "labels": ["SEXUAL"], "language": "de", "source": "seed_authored"}
+{"text": "meine Muschi ist schon feucht für dich", "labels": ["SEXUAL"], "language": "de", "source": "seed_authored"}
+{"text": "lass uns sexting machen", "labels": ["SEXUAL"], "language": "de", "source": "seed_authored"}
+{"text": "ich will deinen nackten Arsch sehen", "labels": ["SEXUAL"], "language": "de", "source": "seed_authored"}
+{"text": "beschreib mir eine Sexszene mit uns beiden", "labels": ["SEXUAL"], "language": "de", "source": "seed_authored"}
+{"text": "schick mir ein Dickpic", "labels": ["SEXUAL"], "language": "de", "source": "seed_authored"}
+{"text": "ich denke ständig an Sex mit dir", "labels": ["SEXUAL"], "language": "de", "source": "seed_authored"}
+{"text": "ich schlag dich tot wenn ich dich treffe", "labels": ["THREAT"], "language": "de", "source": "seed_authored"}
+{"text": "ich finde dich und mach dich fertig", "labels": ["THREAT"], "language": "de", "source": "seed_authored"}
+{"text": "ich weiß wo du wohnst, pass auf", "labels": ["THREAT"], "language": "de", "source": "seed_authored"}
+{"text": "ich komm zu dir und bring dich um", "labels": ["THREAT"], "language": "de", "source": "seed_authored"}
+{"text": "wenn ich dich in echt treffe, bist du tot", "labels": ["THREAT"], "language": "de", "source": "seed_authored"}
+{"text": "ich zerstöre dein Leben, warte nur ab", "labels": ["THREAT"], "language": "de", "source": "seed_authored"}
+{"text": "pass besser auf, ich krieg dich noch", "labels": ["THREAT"], "language": "de", "source": "seed_authored"}
+{"text": "ich schwöre ich mach dich fertig", "labels": ["THREAT"], "language": "de", "source": "seed_authored"}
+{"text": "ich stech dich ab wenn ich dich sehe", "labels": ["THREAT"], "language": "de", "source": "seed_authored"}
+{"text": "deine Familie wird das bereuen", "labels": ["THREAT"], "language": "de", "source": "seed_authored"}
+{"text": "ich verfolge dich bis ich dich finde", "labels": ["THREAT"], "language": "de", "source": "seed_authored"}
+{"text": "ich häng dich morgen im echten Leben ab", "labels": ["THREAT"], "language": "de", "source": "seed_authored"}
+{"text": "du wirst noch sehen was ich mit dir mache", "labels": ["THREAT"], "language": "de", "source": "seed_authored"}
+{"text": "ich schick jemanden zu deinem Haus", "labels": ["THREAT"], "language": "de", "source": "seed_authored"}
+{"text": "ich breche dir alle Knochen", "labels": ["THREAT"], "language": "de", "source": "seed_authored"}
+{"text": "warte nur bis ich dich in die Finger krieg", "labels": ["THREAT"], "language": "de", "source": "seed_authored"}
+{"text": "ich mach dich fertig, das verspreche ich dir", "labels": ["THREAT"], "language": "de", "source": "seed_authored"}
+{"text": "du wirst noch bluten für das was du getan hast", "labels": ["THREAT"], "language": "de", "source": "seed_authored"}
+{"text": "ich zünde dein Haus an", "labels": ["THREAT"], "language": "de", "source": "seed_authored"}
+{"text": "ich krieg dich, egal wie lange es dauert", "labels": ["THREAT"], "language": "de", "source": "seed_authored"}
+{"text": "wie alt bist du und hast du Insta", "labels": ["CHILD_SAFETY"], "language": "de", "source": "seed_authored"}
+{"text": "schick mir ein Bild von dir ohne Shirt", "labels": ["CHILD_SAFETY"], "language": "de", "source": "seed_authored"}
+{"text": "lass uns privat chatten, sag niemandem davon", "labels": ["CHILD_SAFETY"], "language": "de", "source": "seed_authored"}
+{"text": "bist du allein zuhause gerade", "labels": ["CHILD_SAFETY"], "language": "de", "source": "seed_authored"}
+{"text": "wie siehst du aus, schick ein Foto von dir", "labels": ["CHILD_SAFETY"], "language": "de", "source": "seed_authored"}
+{"text": "willst du meine Freundin sein, wie alt bist du", "labels": ["CHILD_SAFETY"], "language": "de", "source": "seed_authored"}
+{"text": "gib mir deine Handynummer, wir reden privat weiter", "labels": ["CHILD_SAFETY"], "language": "de", "source": "seed_authored"}
+{"text": "sag deinen Eltern nichts von unserem Chat", "labels": ["CHILD_SAFETY"], "language": "de", "source": "seed_authored"}
+{"text": "treffen wir uns mal in echt, ganz geheim", "labels": ["CHILD_SAFETY"], "language": "de", "source": "seed_authored"}
+{"text": "bist du ein Junge oder Mädchen, wie alt", "labels": ["CHILD_SAFETY"], "language": "de", "source": "seed_authored"}
+{"text": "schick mir dein Snapchat, nur für uns beide", "labels": ["CHILD_SAFETY"], "language": "de", "source": "seed_authored"}
+{"text": "erzähl mir was du zuhause anhast gerade", "labels": ["CHILD_SAFETY"], "language": "de", "source": "seed_authored"}
+{"text": "ich mag jüngere Kids wie dich besonders", "labels": ["CHILD_SAFETY"], "language": "de", "source": "seed_authored"}
+{"text": "sag mir wo du wohnst, ich komm dich besuchen", "labels": ["CHILD_SAFETY"], "language": "de", "source": "seed_authored"}
+{"text": "das bleibt unser Geheimnis, ok", "labels": ["CHILD_SAFETY"], "language": "de", "source": "seed_authored"}
+{"text": "schick mir mehr Bilder von dir, ganz privat", "labels": ["CHILD_SAFETY"], "language": "de", "source": "seed_authored"}
+{"text": "wie alt bist du wirklich, sei ehrlich", "labels": ["CHILD_SAFETY"], "language": "de", "source": "seed_authored"}
+{"text": "willst du mit mir ein Geheimnis teilen", "labels": ["CHILD_SAFETY"], "language": "de", "source": "seed_authored"}
+{"text": "geh in einen privaten Call mit mir, nur wir beide", "labels": ["CHILD_SAFETY"], "language": "de", "source": "seed_authored"}
+{"text": "erzähl niemandem dass wir schreiben", "labels": ["CHILD_SAFETY"], "language": "de", "source": "seed_authored"}
