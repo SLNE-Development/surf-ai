@@ -7,11 +7,11 @@ import java.nio.FloatBuffer
 import java.nio.file.Path
 import kotlin.math.exp
 
-class ClassificationHead(onnxPath: Path) : AutoCloseable {
+class ClassificationHead(onnxPath: Path) : Scorer, AutoCloseable {
     private val environment = OrtEnvironment.getEnvironment()
     private val session: OrtSession = environment.createSession(onnxPath.toString())
 
-    fun score(embeddings: Array<FloatArray>): Array<FloatArray> {
+    override fun score(embeddings: Array<FloatArray>): Array<FloatArray> {
         val batch = embeddings.size
         val dims = embeddings[0].size
         val buffer = FloatBuffer.allocate(batch * dims)

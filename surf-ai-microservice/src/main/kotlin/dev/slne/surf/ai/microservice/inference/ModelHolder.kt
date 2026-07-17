@@ -6,16 +6,16 @@ import dev.slne.surf.ai.microservice.storage.ModelStorage
 import kotlin.io.path.Path
 import kotlin.io.path.exists
 
-class ModelHolder {
+open class ModelHolder {
     @Volatile private var snapshot: Snapshot? = null
 
-    val activeVersion: Int? get() = snapshot?.version
+    open val activeVersion: Int? get() = snapshot?.version
 
-    fun ready(): Boolean = snapshot != null
-    fun embeddingModel(): EmbeddingModel? = snapshot?.embedding
-    fun classificationHead(): ClassificationHead? = snapshot?.head
+    open fun ready(): Boolean = snapshot != null
+    open fun embedder(): Embedder? = snapshot?.embedding
+    open fun scorer(): Scorer? = snapshot?.head
 
-    suspend fun reloadTo(version: ModelVersionRow, storage: ModelStorage, config: AiConfig) {
+    open suspend fun reloadTo(version: ModelVersionRow, storage: ModelStorage, config: AiConfig) {
         val embeddingOnnx = Path("cache/models/embedding/model.onnx")
         val tokenizerJson = Path("cache/models/embedding/tokenizer.json")
         if (!embeddingOnnx.exists()) storage.download("models/embedding/model.onnx", embeddingOnnx)
