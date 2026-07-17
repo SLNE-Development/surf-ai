@@ -15,8 +15,9 @@ Dieses Projekt liefert ausschließlich das **Modell-System**: Inferenz-API, trai
 - Feedback-Mechanismus: `AIInstance.feedback(requestId, feedback)`, damit man falsche Einschätzungen korrigieren kann und das Modell sich anpasst.
 - Primär **Deutsch + Englisch**, einfach um weitere Sprachen erweiterbar.
 - Kontextverständnis statt reinem Keyword-Matching:
-  - Flaggen: `"kys"`, `"geh dich doch einfach umbringen"`, `"du hurensohn"`.
-  - **Nicht** flaggen: `"geh doch einfach hinten auf den berg und spring runter"` (Minecraft-Kontext), `"Penis"` als harmloser Begriff.
+  - Flaggen: `"kys"`, `"geh dich doch einfach umbringen"`, `"du hurensohn"`, `"Penis"` (→ `SEXUAL`).
+  - **Nicht** flaggen: `"geh doch einfach hinten auf den berg und spring runter"` (Minecraft-Kontext).
+  - Feedback korrigiert nicht nur Falsch-Flags, sondern auch **zu niedrige** Scores: wird `"Penis"` z.B. nur mit 35% `SEXUAL` bewertet, hebt `FalseNegative(SEXUAL)` den Score bei künftigem Training an.
 - Persistentes Training + Model-Snapshots mit Rollback (Schutz gegen Vergiftung durch fehlerhaftes Feedback).
 
 ### Kategorien (Multi-Label)
@@ -70,8 +71,11 @@ Baut auf der bestehenden Struktur auf:
 interface AIInstance {
     val dataPath: Path
     suspend fun check(input: String): AiCheckResult
-    suspend fun feedback(requestId: UUID, feedback: AiFeedback)
+    suspend fun feedback(requestId: UUID, feedback: AiFeedback): AiFeedbackResult
 }
+
+@Serializable
+enum class AiFeedbackResult { ACCEPTED, EXPIRED }  // EXPIRED = requestId nicht mehr im TTL-Cache
 
 @Serializable
 data class AiCheckResult(
@@ -110,7 +114,7 @@ Design-Entscheidungen:
 @RpcService
 interface AiRpcService {
     suspend fun check(input: String): AiCheckResult
-    suspend fun feedback(requestId: UUID, feedback: AiFeedback)
+    suspend fun feedback(requestId: UUID, feedback: AiFeedback): AiFeedbackResult
 }
 
 @RpcService
@@ -132,19 +136,24 @@ check(text)
   → Tokenizer + Embedding-Model (ONNX, frozen)  → 384-dim Vektor
   → Override-Cache-Lookup (exakter/naher Treffer? → korrigierter Score)
   → Klassifikations-Kopf (MLP, aktueller Snapshot) → 6 Logits → Sigmoid → 0–100
-  → persist(requestId, text, embedding, scores) in ai_request
+  → in flüchtigen TTL-Cache legen (requestId → text, embedding, scores)  ← KEIN DB-Write
   → return AiCheckResult(requestId, scores)
 ```
 
+- **Kein DB-Write pro Nachricht.** Bei 50–100/s wären das ~4–8 Mio. Zeilen/Tag — unerwünscht. Jedes `check()`-Resultat landet nur in einem **flüchtigen In-Memory-TTL-Cache** (z.B. 15–30 Min, konfigurierbar), damit ein späteres `feedback(uuid)` die Anfrage noch auflösen kann. Nach der TTL wird die Nachricht verworfen. Persistiert wird **ausschließlich**, was per Feedback gelabelt wird (siehe §7) — plus der Seed-Korpus.
 - **Micro-Batching** bündelt einzelne `check()`-Calls für effiziente Embedding-Inferenz; deckt 50–100/s mit Reserve ab. Batch-Fenster + max Batchgröße konfigurierbar.
 - **Thread-/Coroutine-Pool** für Embedding-Inferenz, damit RabbitMQ-Worker nicht blockieren.
-- Embedding wird gespeichert (für spätere Retrains muss der Text nicht neu embeddet werden — spart Rechenzeit; Vektor gilt nur solange das Embedding-Model gleich bleibt).
+- Das Embedding wird im TTL-Cache mitgehalten: kommt Feedback, ist der Vektor schon da und muss nicht neu berechnet werden (Vektor gilt nur solange das Embedding-Model gleich bleibt).
 
 ## 7. Feedback-Mechanismus
 
-- **Override-Cache (in-JVM, flüchtig):** Bei `feedback()` wird ein Override in einen LRU-Cache geschrieben (Key: normalisierter Text / Embedding-Nähe). Identische/sehr ähnliche Nachricht → sofort korrigierter Score. Wird beim nächsten Retrain überflüssig.
-- **Persistenter Feedback-Store (DB):** `ai_feedback` (request_id → typ + categories + source + timestamp). Echte Trainingsquelle.
-- Feedback bekommt **Quarantäne-Status** und ein Gewicht; fließt beim nächsten Retrain als Trainingssignal ein.
+Ablauf `feedback(requestId, feedback)`:
+
+1. Auflösung der `requestId` im **TTL-Cache** (§6). Ist sie abgelaufen/unbekannt (Feedback kam zu spät oder nach Microservice-Neustart) → No-Op mit klarem Ergebnis (`FeedbackResult.Expired`), kein Fehler.
+2. **Persistieren als gelabeltes Trainingsbeispiel:** Der aufgelöste Text (+ ggf. Embedding) wird zusammen mit den korrigierten Labels dauerhaft in `ai_labeled_sample` geschrieben. **Das ist der einzige Weg, wie reguläre Chatnachrichten in die DB gelangen.**
+3. **Override-Cache (in-JVM, flüchtig):** Zusätzlich wird ein Override in einen LRU-Cache geschrieben (Key: normalisierter Text / Embedding-Nähe). Identische/sehr ähnliche Nachricht → sofort korrigierter Score. Wird beim nächsten Retrain überflüssig.
+
+Semantik: Feedback beschreibt das **korrekte Label**, unabhängig vom angezeigten Confidence-Wert. `FalseNegative(SEXUAL)` = „SEXUAL ist korrekt/soll hoch sein" (hebt einen zu niedrigen Score an); `FalsePositive(SEXUAL)` = „SEXUAL ist falsch" (senkt ihn). Jedes gelabelte Beispiel bekommt einen **Quarantäne-Status** und ein Gewicht; es fließt beim nächsten Retrain als Trainingssignal ein.
 
 ## 8. Model-Versionierung & Snapshots
 
@@ -160,7 +169,7 @@ check(text)
   - Nightly-Cron (interner Scheduler) **und** `POST /retrain` (on-demand, ausgelöst durch `triggerRetrain()` im Microservice).
   - `GET /health` als Coolify-Healthcheck.
 - **Ablauf Retrain:**
-  1. Lädt Seed-Korpus (`ai_seed_sample`) + bestätigtes Feedback (`ai_feedback` + verknüpfte `ai_request`) aus Postgres (direkter Treiber).
+  1. Lädt Seed-Korpus (`ai_seed_sample`) + gelabelte Feedback-Samples (`ai_labeled_sample`, nicht in Quarantäne) aus Postgres (direkter Treiber).
   2. Erzeugt Embeddings mit **identischem** frozen Model wie die JVM.
   3. Trainiert MLP-Kopf (Multi-Label, `BCEWithLogitsLoss`, ggf. Klassen-Gewichte gegen Imbalance).
   4. Evaluiert auf festem Holdout-Set → Metriken.
@@ -172,18 +181,26 @@ check(text)
 
 Alle Tabellen via `dev.slne.surf.database`, Exposed, `AuditableLongIdTable` (createdAt/updatedAt gratis), Repos mit `suspendTransaction`.
 
-- **`ai_request`** — `requestId` (nativeUuid), `input_text`, `embedding` (optional, als Array/BLOB), `scores_json`, `model_version`.
-- **`ai_feedback`** — `request_id` (FK), `feedback_type`, `categories`, `source`, `quarantine_status`, `weight`.
+**Wichtig: es gibt KEINE `ai_request`-Tabelle.** Rohe Chatnachrichten werden nie persistiert — sie leben nur im flüchtigen TTL-Cache im RAM des Microservice (§6). In die DB gelangt eine Nachricht ausschließlich, wenn Feedback sie labelt.
+
+- **`ai_labeled_sample`** — die einzige Trainingsquelle aus Live-Traffic: `text`, `embedding` (optional, Array/BLOB), `labels` (Set<AiCategory>), `feedback_type`, `source`, `quarantine_status`, `weight`, `origin_model_version`. Entsteht ausschließlich durch `feedback()`.
 - **`ai_model_version`** — `version`, `s3_key`, `embedding_model_id`, `metrics_json`, `training_data_hash`, `is_active`.
-- **`ai_seed_sample`** — `text`, `labels` (Set<AiCategory>), `language`, `source`.
+- **`ai_seed_sample`** — kuratierter Grund-Korpus: `text`, `labels` (Set<AiCategory>), `language`, `source`.
+
+Grober Storage-Umfang: Seed-Korpus (hunderte–tausende Zeilen) + gelabelte Feedback-Samples (wächst nur so schnell wie Mods tatsächlich Feedback geben — Größenordnung Zeilen/Tag, nicht Millionen). Vollkommen unkritisch.
 
 ## 11. Seed-Datensatz
 
-- Kuratierter, gelabelter Multi-Label-Korpus **DE + EN**:
-  - Gängige Schimpf-/Toxizitäts-Muster pro Kategorie.
-  - Gezielte **Negativ-Beispiele mit Minecraft-Kontext** (z.B. „vom Berg springen", „Creeper töten", „Penis" als harmloser Begriff), damit das Modell Kontext statt Keywords lernt.
-- Klein starten (einige hundert–tausend Beispiele reicht für den Kopf), wächst via Feedback.
-- Als versionierte Datei(en) im Repo (`surf-ai-trainer/seed/`), beim ersten Bootstrap in `ai_seed_sample` geladen.
+Kuratierter, gelabelter Multi-Label-Korpus **DE + EN** aus drei Quellen:
+
+1. **Öffentliche Toxizitäts-Datensätze** für das allgemeine DE/EN-Grundsignal (Beleidigung/Hass/Bedrohung): u.a. Jigsaw Toxic Comment (EN), Jigsaw Multilingual, **GermEval** & **HASOC** (deutsche Offensive/Hate-Datensätze), HateCheck. Lizenzen prüfen und dokumentieren; auf unsere 6 Kategorien mappen.
+2. **Kuratierte Wort-/Phrasenlisten** (DE+EN Schimpfwörter/Slurs) für offensichtliche Fälle pro Kategorie.
+3. **Minecraft-Kontext (nicht öffentlich → selbst erzeugt):** hand-geschriebene + **LLM-gestützt synthetisch generierte** Beispiele, human-reviewed:
+   - **Hard Negatives** — Gaming-Phrasen, die out-of-context toxisch klingen, aber benigne sind: „geh hinten auf den berg und spring runter", „ich bomb deine base weg", „geh sterben im pvp", „kill the ender dragon".
+   - **Positives im Gaming-Slang** — echte Toxizität in Gaming-Sprache.
+
+- Klein starten (einige hundert–tausend Beispiele reicht für den Kopf), wächst dann via echtes Feedback (`ai_labeled_sample`), das die synthetischen Daten mit der realen Server-Verteilung anreichert.
+- Als versionierte Datei(en) im Repo (`surf-ai-trainer/seed/`), beim ersten Bootstrap in `ai_seed_sample` geladen. Generierungs-/Kurations-Skripte liegen dabei.
 
 ## 12. Deployment (Docker / Coolify)
 
@@ -202,7 +219,7 @@ Alle Tabellen via `dev.slne.surf.database`, Exposed, `AuditableLongIdTable` (cre
   - `"geh dich doch einfach umbringen"` → `SELF_HARM` hoch
   - `"du hurensohn"` → `HARASSMENT` hoch
   - `"geh doch einfach hinten auf den berg und spring runter"` → alle niedrig
-  - `"Penis"` → `SEXUAL` niedrig
+  - `"Penis"` → `SEXUAL` erhöht (soll geflaggt werden)
 - **Trainer (Python):** Tests für Export-Format, Metrik-Guard, Holdout-Eval, S3-Roundtrip (gegen MinIO).
 - **Integrationstest:** Microservice ↔ Trainer Retrain-Zyklus (Trigger → neue Version → Hot-Reload → geänderte Prediction).
 
