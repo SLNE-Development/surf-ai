@@ -2,8 +2,9 @@ package dev.slne.surf.ai.microservice
 
 import com.google.auto.service.AutoService
 import dev.slne.surf.ai.core.common.ExampleRpcService
-import dev.slne.surf.ai.microservice.config.AiConfig
-import dev.slne.surf.ai.microservice.db.tables.ExampleTable
+import dev.slne.surf.ai.microservice.db.tables.AiLabeledSampleTable
+import dev.slne.surf.ai.microservice.db.tables.AiModelVersionTable
+import dev.slne.surf.ai.microservice.db.tables.AiSeedSampleTable
 import dev.slne.surf.ai.microservice.rpc.ExampleRpcServiceImpl
 import dev.slne.surf.database.DatabaseApi
 import dev.slne.surf.database.libs.org.jetbrains.exposed.v1.r2dbc.SchemaUtils
@@ -21,10 +22,7 @@ class AiMicroservice : Microservice() {
     val databaseApi = DatabaseApi.create(dataPath)
 
     override suspend fun onBootstrap(args: List<String>) {
-        SchemaUtils.create(ExampleTable)
-
-        // Example on how to access config
-        val something = AiConfig.getConfig().something
+        SchemaUtils.create(AiSeedSampleTable, AiLabeledSampleTable, AiModelVersionTable)
 
         rabbitApi.registerRpcService<ExampleRpcService>(ExampleRpcServiceImpl())
         rabbitApi.freezeAndConnect()
