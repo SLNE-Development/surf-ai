@@ -17,5 +17,7 @@ surfMicroservice {
 dependencies {
     api(projects.surfAiCore.surfAiCoreCommon)
     implementation("io.minio:minio:8.5.12")
+    implementation("ai.djl.huggingface:tokenizers:0.30.0")
+    implementation("com.microsoft.onnxruntime:onnxruntime:1.19.2")
     testImplementation(kotlin("test"))
 }
