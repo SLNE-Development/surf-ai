@@ -8,7 +8,7 @@ import java.nio.LongBuffer
 import java.nio.file.Path
 import kotlin.math.sqrt
 
-class EmbeddingModel(onnxPath: Path, tokenizerPath: Path, private val prefix: String) : AutoCloseable {
+class EmbeddingModel(onnxPath: Path, tokenizerPath: Path, private val prefix: String) : Embedder, AutoCloseable {
     private val tokenizer = HuggingFaceTokenizer.builder()
         .optTokenizerPath(tokenizerPath)
         .optPadding(true)
@@ -18,7 +18,7 @@ class EmbeddingModel(onnxPath: Path, tokenizerPath: Path, private val prefix: St
     private val environment = OrtEnvironment.getEnvironment()
     private val session: OrtSession = environment.createSession(onnxPath.toString())
 
-    fun embed(texts: List<String>): Array<FloatArray> {
+    override fun embed(texts: List<String>): Array<FloatArray> {
         val encodings = tokenizer.batchEncode(texts.map { prefix + it })
         val batch = encodings.size
         val seqLen = encodings.maxOf { it.ids.size }
