@@ -40,3 +40,11 @@ bin/
 
 ### Mac OS ###
 .DS_Store
+
+### Python ###
+__pycache__/
+*.egg-info/
+.pytest_cache/
+.venv/
+*.onnx
+cache/

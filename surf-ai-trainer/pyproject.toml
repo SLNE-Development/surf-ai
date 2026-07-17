@@ -1,0 +1,29 @@
+[project]
+name = "surf-ai-trainer"
+version = "0.1.0"
+description = "Self-trainable chat-moderation head trainer sidecar for surf-ai"
+requires-python = ">=3.11"
+dependencies = [
+    "torch",
+    "transformers",
+    "optimum[onnxruntime]",
+    "onnxruntime",
+    "numpy",
+    "scikit-learn",
+    "fastapi",
+    "uvicorn[standard]",
+    "apscheduler",
+    "boto3",
+    "psycopg[binary]",
+    "pydantic-settings",
+]
+
+[project.optional-dependencies]
+dev = ["pytest"]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["app*"]
