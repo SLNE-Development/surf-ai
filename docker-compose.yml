@@ -1,0 +1,107 @@
+# Coolify-consumable compose file. Deploy this file directly as a Coolify "Docker Compose"
+# resource, or `docker compose --env-file .env up -d` for a plain Docker host. Copy .env.example
+# to .env and fill in real secrets first.
+#
+# The postgres/rabbitmq/minio services are only needed if you are NOT pointing at Coolify's
+# (or another host's) already-managed instances of those services - if you have managed
+# Postgres/RabbitMQ/MinIO elsewhere, remove these three services and point the env vars below
+# at them instead.
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-surf_ai}
+      POSTGRES_USER: ${POSTGRES_USER:-surf_ai}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-surf_ai}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  rabbitmq:
+    image: rabbitmq:3.13-management-alpine
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-surf}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:?set RABBITMQ_PASSWORD in .env}
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  minio:
+    image: minio/minio:latest
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${S3_ACCESS_KEY:-surfai}
+      MINIO_ROOT_PASSWORD: ${S3_SECRET_KEY:?set S3_SECRET_KEY in .env}
+    volumes:
+      - minio-data:/data
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  minio-init:
+    image: minio/mc:latest
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint: >
+      /bin/sh -c "
+      mc alias set local http://minio:9000 ${S3_ACCESS_KEY:-surfai} ${S3_SECRET_KEY} &&
+      mc mb --ignore-existing local/${S3_BUCKET:-surf-ai} &&
+      echo 'bucket ready'"
+
+  microservice:
+    build:
+      context: .
+      dockerfile: surf-ai-microservice/Dockerfile
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    environment:
+      POSTGRES_DSN: postgresql://${POSTGRES_USER:-surf_ai}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-surf_ai}
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_USER: ${RABBITMQ_USER:-surf}
+      RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD}
+      S3_ENDPOINT: http://minio:9000
+      S3_BUCKET: ${S3_BUCKET:-surf-ai}
+      S3_ACCESS_KEY: ${S3_ACCESS_KEY:-surfai}
+      S3_SECRET_KEY: ${S3_SECRET_KEY}
+      TRAINER_BASE_URL: http://trainer:8000
+    volumes:
+      - microservice-config:/app/config
+
+  trainer:
+    build:
+      context: surf-ai-trainer
+      dockerfile: Dockerfile
+    depends_on:
+      postgres:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    environment:
+      SURF_AI_TRAINER_POSTGRES_DSN: postgresql://${POSTGRES_USER:-surf_ai}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-surf_ai}
+      SURF_AI_TRAINER_S3_ENDPOINT: http://minio:9000
+      SURF_AI_TRAINER_S3_BUCKET: ${S3_BUCKET:-surf-ai}
+      SURF_AI_TRAINER_S3_ACCESS_KEY: ${S3_ACCESS_KEY:-surfai}
+      SURF_AI_TRAINER_S3_SECRET_KEY: ${S3_SECRET_KEY}
+
+volumes:
+  postgres-data:
+  rabbitmq-data:
+  minio-data:
+  microservice-config:
