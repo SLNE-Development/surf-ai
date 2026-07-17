@@ -8,6 +8,8 @@ import com.velocitypowered.api.event.proxy.ProxyShutdownEvent
 import com.velocitypowered.api.plugin.PluginContainer
 import com.velocitypowered.api.plugin.annotation.DataDirectory
 import com.velocitypowered.api.proxy.ProxyServer
+import dev.slne.surf.ai.client.common.AiClientInstance
+import kotlinx.coroutines.runBlocking
 import java.nio.file.Path
 
 class VelocityMain @Inject constructor(
@@ -19,14 +21,20 @@ class VelocityMain @Inject constructor(
     init {
         INSTANCE = this
         suspendingContainer.initialize(this)
+
+        runBlocking {
+            AiClientInstance.INSTANCE.onLoad()
+        }
     }
 
     @Subscribe
-    fun onProxyInitialize(event: ProxyInitializeEvent) {
+    suspend fun onProxyInitialize(event: ProxyInitializeEvent) {
+        AiClientInstance.INSTANCE.onEnable()
     }
 
     @Subscribe
-    fun onShutdown(event: ProxyShutdownEvent) {
+    suspend fun onShutdown(event: ProxyShutdownEvent) {
+        AiClientInstance.INSTANCE.onDisable()
     }
 
     companion object {

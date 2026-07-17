@@ -3,5 +3,5 @@ plugins {
 }
 
 dependencies {
-    api(projects.surfAiApi)
+    api(projects.surfAiCore.surfAiCoreCommon)
 }

@@ -6,7 +6,7 @@ import dev.slne.surf.ai.client.common.AiClientInstance
 import java.nio.file.Path
 
 @AutoService(AiClientInstance::class, AIInstance::class)
-class AiPaperClientInstance : AiClientInstance {
+class AiPaperClientInstance : AiClientInstance() {
     override val dataPath: Path
         get() = plugin.dataPath
 }

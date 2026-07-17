@@ -6,10 +6,9 @@ plugins {
 }
 
 surfMicroservice {
-    withRabbitModule(RabbitModule.CLIENT_API)
-    withClientCommonApi()
+    withRabbitModule(RabbitModule.COMMON_API)
 }
 
 dependencies {
-    api(projects.surfAiCore.surfAiCoreClient)
+    api(projects.surfAiApi)
 }
