@@ -5,6 +5,7 @@ description = "Self-trainable chat-moderation head trainer sidecar for surf-ai"
 requires-python = ">=3.11"
 dependencies = [
     "torch",
+    "onnxscript",
     "transformers",
     "optimum[onnxruntime]",
     "onnxruntime",
